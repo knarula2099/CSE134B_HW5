@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Progressive Enhancement Widget</title>
+    <style>
+        :root {
+            --rating-bg-color: rgb(204, 25, 25);
+            --star-color: rgb(255, 255, 255);
+            --hover-color: rgb(211, 202, 26);
+        }
+        rating-widget {
+            display: flex;
+            padding: 10px;
+            margin: 10px;
+            background-color: var(--rating-bg-color, rgb(204, 25, 25));
+            border-radius: 1vh; /* Corrected unit */
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Progressive Enhancement Widget</h1>
+    <p>This form will work a certain way if JS is enabled, and another if it is disabled</p>
+    <rating-widget>
+        <form action="https://httpbin.org/post" method="POST">
+            <label for="rating">How satisfied are you?</label>
+            <input type="hidden" name="question" value="How satisfied are you?">
+            <input type="hidden" name="sentBy" value="HTML">
+            <input type="number" id="rating" name="rating" min="1" max="5" value="0" required>
+            <button type="submit" id="submit">Submit</button>
+        </form> <!-- Closed form tag -->
+    </rating-widget>
+
+    <script type="module">
+        class RatingWidget extends HTMLElement {
+            constructor() {
+                super();
+    
+                this.attachShadow({ mode: 'open' });
+                this.starContainer = document.createElement('div');
+                this.shadowRoot.appendChild(this.starContainer);
+                const style = document.createElement('style');
+                style.innerHTML = `
+                    :host {
+                        display: flex;
+                        padding: 10px;
+                        margin: 10px;
+                        border-radius: 1vh; /* Corrected unit */
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    :host div {
+                        color: white;
+                    }
+
+                    .hover {
+                        color: var(--hover-color, rgb(211, 202, 26));
+                    }
+
+                    .invisible {
+                        display: none;
+                    }
+                `;
+
+                // Append the style element to the shadow root
+                this.shadowRoot.appendChild(style);
+            }
+
+            connectedCallback() {
+                const ratingInput = this.querySelector('#rating'); /* Corrected selector */
+                const maxRating = ratingInput.max;
+                
+                for (let i = 0; i < maxRating; i++) {
+                    const star = document.createElement('span');
+                    star.textContent = '✰';
+                    star.style.cursor = 'pointer';
+                    star.style.fontSize = '24px';
+                    star.addEventListener('mouseover', () => {
+                        this.highlightStar(i + 1);
+                    });
+                    star.addEventListener('mouseout', () => {
+                        this.highlightStar(-1);
+                    });
+                    star.addEventListener('click', () => {
+                        ratingInput.value = i + 1;
+                        this.submitRating(i+1);
+                    });
+                    this.starContainer.appendChild(star);
+                }
+                this.message = document.createElement('p');
+                this.starContainer.appendChild(this.message);
+            }
+
+            disconnectedCallback() {
+                this.starContainer.innerHTML = '';
+            }
+
+            highlightStar(rating) {
+                const stars = this.starContainer.querySelectorAll('span');
+                stars.forEach((star, index) => {
+                    if (index < rating) {
+                        star.innerHTML = '★';
+                        star.classList.add('hover');
+                    } else {
+                        star.innerHTML = '✰';
+                        star.classList.remove('hover');
+                    }
+                });
+            }
+
+            submitRating(rating) {
+                const ratingInput = this.querySelector('#rating');
+                const stars = this.starContainer.querySelectorAll('span');
+                stars.forEach(star => star.classList.add('invisible'));
+                const maxRating = ratingInput.max;
+                const fracRating = rating / maxRating;
+                console.log(fracRating);
+
+                if (fracRating >= 0.8){
+                    this.message.textContent = 'Thank you for the ' + rating + ' star rating!';
+                } else {
+                    this.message.textContent = 'Thanks for your feedback of ' + rating + ' stars. We will try harder next time!';
+                }
+
+                // change the value of the hidden field with name sentBy
+                const sentBy = this.querySelector('input[name="sentBy"]');
+                sentBy.value = 'JS';
+
+                // Prepare your form data
+                const formData = new FormData();
+                formData.append('rating', rating);
+                formData.append('sentBy', 'JS');
+
+                // Send the request with a custom header
+                fetch('https://httpbin.org/post', {
+                    method: 'POST',
+                    headers: {
+                        'X-Sent-By': 'JS'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response:', data);
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        }
+
+        customElements.define('rating-widget', RatingWidget);
+    </script>
+</body>
+</html>

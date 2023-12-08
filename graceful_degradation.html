@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Graceful Degradation Widget</title>
+        <style>
+            :root{
+                --widget-bg-color: rgb(86, 86, 86);
+                --opacity-background: rgb(255, 255, 255);
+                --border-color: rgb(27, 25, 25);
+                --widget-text-color: rgb(238, 8, 8);
+            }
+            
+            * {
+                font: sans-serif;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Graceful Degradation Widget</h1>
+        <p>The weather widget will only work when JS is working and will not work other wise</p>
+        <weather-widget>
+            <p>Current Weather Conditions Unavailable</p>
+        </weather-widget>
+        <script>
+            class WeatherWidget extends HTMLElement {
+                constructor() {
+                    super();
+                    
+                    this.WEATHER_DATA_URL = 'https://api.weather.gov/gridpoints/SGX/54,20/forecast/hourly'
+                    
+                    this.attachShadow({ mode: 'open' });
+
+                    this.shadowRoot.innerHTML = `
+                        <style>
+                            :host {
+                                font-family: sans-serif, Arial, Helvetica;
+                                display: flex;
+                                flex-direction: row;
+                                flex-wrap: wrap;
+                                justify-content: space-evenly;
+                                align-items: center;
+                                margin: 0;
+                                max-width: 80%;
+                                background-color: var(--background-color, rgb(86, 86, 86));
+                                border: 1px solid var(--border-color, rgb(27, 25, 25));
+                                color: white;
+                                border-radius: var(--border-radius, 5px);
+                            }
+
+                            #widget {
+                                display: flex;
+                                flex-direction: row;
+                                justify-content: space-evenly;
+                                align-items: center;
+                            }
+
+                            .column {
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: space-between;
+                                align-items: center;
+                            }
+
+                            p {
+                                margin: 1em;
+                                padding: 1em;
+                                width: 30dvh;
+                                border: 1px solid var(--border-color, rgb(27, 25, 25));
+                                background-color: var(--widget-bg-color, rgb(86, 86, 86));
+                                border-radius: 5px;
+                            }
+
+                            p::before {
+                                content: attr(id);
+                                font-weight: bold;
+                                display: block;
+                                margin-bottom: 0.5em;
+                            }
+                        </style>
+                        <div id="widget">
+                            <div class='column'>
+                                <p id="Forecast"></p>
+                                <p id="Temperature"></p>
+                                <p id='Windspeed'></p>
+                            </div>
+                            <div class='column'>
+                                <p id='Humidity'></p>
+                                <p id='Precipitation'></p>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                connectedCallback() {
+                    this.fetchWeatherData();
+                    // Calculate the milliseconds until the next hour
+                    const now = new Date();
+                    const delay = (60 - now.getMinutes()) * 60 * 1000;
+                    // Fetch the weather data at the start of the next hour and every hour after that
+                    setInterval(() => this.fetchWeatherData(), delay);
+                }
+
+                fetchWeatherData() {
+                    fetch(this.WEATHER_DATA_URL)
+                        .then(response => response.json())
+                        .then(data => {
+                            const weatherData = data.properties.periods[0];
+                            console.log(weatherData); 
+                            const weatherForecast = weatherData.shortForecast;
+                            this.shadowRoot.querySelector('#Forecast').innerHTML = weatherForecast;
+                            const weatherTemp = weatherData.temperature;
+                            const weatherUnit = weatherData.temperatureUnit;
+                            this.shadowRoot.querySelector('#Temperature').innerHTML = weatherTemp + '°' + weatherUnit ;
+                            const weatherWindSpeed = weatherData.windSpeed;
+                            this.shadowRoot.querySelector('#Windspeed').innerHTML = weatherWindSpeed;
+                            const weatherHumidity = weatherData.relativeHumidity.value;
+                            this.shadowRoot.querySelector('#Humidity').innerHTML = weatherHumidity + '%';
+                            const weatherPrecipitation = weatherData.probabilityOfPrecipitation.value;
+                            this.shadowRoot.querySelector('#Precipitation').innerHTML = weatherPrecipitation + '%';
+                            const weatherIcon = weatherData.icon;
+                            this.fetchWeatherIcon(weatherIcon);
+                        })
+                        .catch(error => {
+                            console.error(error);
+                        });
+                }
+
+                fetchWeatherIcon(icon) {
+                    if (icon.includes(',0')) {
+                        icon=icon.replace(',0','');
+                    }
+                    fetch(icon)
+                        .then(response => response.blob())
+                        .then(blob => {
+                            const url = URL.createObjectURL(blob);
+                            console.log(url);
+                            this.shadowRoot.innerHTML += `
+                                <style>
+                                    #widget {
+                                        background-image: url(${url});
+                                        background-repeat: no-repeat;
+                                        background-size: cover;
+                                        background-position: center;
+                                        width: 100%;
+                                        height: 60dvh;
+
+                                        &::after {
+                                            content: '';
+                                            position: absolute;
+                                            z-index: -1;
+                                            opacity: 0.6;
+                                            inset: 0;
+                                            background: var(--opacity_background, rgb(255, 255, 255));
+                                        
+                                        }
+                                    }
+
+                                    
+                                </style>
+                            `;
+                           
+                        })
+                        .catch(error => {
+                            console.error(error);
+                        });
+                }
+            }
+            customElements.define('weather-widget', WeatherWidget);
+        </script>
+    </body>
+</html>
