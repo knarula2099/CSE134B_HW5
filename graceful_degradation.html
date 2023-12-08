@@ -8,7 +8,7 @@
                 --widget-bg-color: rgb(86, 86, 86);
                 --opacity-background: rgb(255, 255, 255);
                 --border-color: rgb(27, 25, 25);
-                --widget-text-color: rgb(238, 8, 8);
+                --widget-box-color: rgb(238, 8, 8);
             }
             
             * {
@@ -41,7 +41,7 @@
                                 justify-content: space-evenly;
                                 align-items: center;
                                 margin: 0;
-                                max-width: 80%;
+                                width: 60dvw;
                                 background-color: var(--background-color, rgb(86, 86, 86));
                                 border: 1px solid var(--border-color, rgb(27, 25, 25));
                                 color: white;
@@ -51,8 +51,20 @@
                             #widget {
                                 display: flex;
                                 flex-direction: row;
-                                justify-content: space-evenly;
+                                justify-content: space-between;
+                                width: 80dvw;
                                 align-items: center;
+                            }
+
+                            #iconic {
+                                flex: 1;
+                                margin: 1rem;
+                                background-repeat: no-repeat;
+                                background-size: cover;
+                                background-position: center;
+                                max-width: 15rem;
+                                min-height: 15rem;
+                                height: 15rem;
                             }
 
                             .column {
@@ -65,9 +77,9 @@
                             p {
                                 margin: 1em;
                                 padding: 1em;
-                                width: 30dvh;
+                                width: 70%;
                                 border: 1px solid var(--border-color, rgb(27, 25, 25));
-                                background-color: var(--widget-bg-color, rgb(86, 86, 86));
+                                background-color: var(--widget-box-color, rgb(238, 8, 8));
                                 border-radius: 5px;
                             }
 
@@ -79,6 +91,8 @@
                             }
                         </style>
                         <div id="widget">
+                            <div class='column' id='iconic'>
+                            </div>
                             <div class='column'>
                                 <p id="Forecast"></p>
                                 <p id="Temperature"></p>
@@ -135,31 +149,7 @@
                         .then(blob => {
                             const url = URL.createObjectURL(blob);
                             console.log(url);
-                            this.shadowRoot.innerHTML += `
-                                <style>
-                                    #widget {
-                                        background-image: url(${url});
-                                        background-repeat: no-repeat;
-                                        background-size: cover;
-                                        background-position: center;
-                                        width: 100%;
-                                        height: 60dvh;
-
-                                        &::after {
-                                            content: '';
-                                            position: absolute;
-                                            z-index: -1;
-                                            opacity: 0.6;
-                                            inset: 0;
-                                            background: var(--opacity_background, rgb(255, 255, 255));
-                                        
-                                        }
-                                    }
-
-                                    
-                                </style>
-                            `;
-                           
+                            this.shadowRoot.querySelector('#iconic').style.backgroundImage = `url(${url})`;
                         })
                         .catch(error => {
                             console.error(error);
