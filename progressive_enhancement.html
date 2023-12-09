@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Progressive Enhancement Widget</title>
     <style>
         :root {
@@ -14,7 +15,7 @@
             padding: 10px;
             margin: 10px;
             background-color: var(--rating-bg-color, rgb(204, 25, 25));
-            border-radius: 1vh; /* Corrected unit */
+            border-radius: 1vh;
             align-items: center;
             justify-content: center;
         }
@@ -30,7 +31,7 @@
             <input type="hidden" name="sentBy" value="HTML">
             <input type="number" id="rating" name="rating" min="1" max="5" value="0" required>
             <button type="submit" id="submit">Submit</button>
-        </form> <!-- Closed form tag -->
+        </form> 
     </rating-widget>
 
     <script type="module">
@@ -47,7 +48,7 @@
                         display: flex;
                         padding: 10px;
                         margin: 10px;
-                        border-radius: 1vh; /* Corrected unit */
+                        border-radius: 1vh;
                         align-items: center;
                         justify-content: center;
                     }
@@ -65,12 +66,11 @@
                     }
                 `;
 
-                // Append the style element to the shadow root
                 this.shadowRoot.appendChild(style);
             }
 
             connectedCallback() {
-                const ratingInput = this.querySelector('#rating'); /* Corrected selector */
+                const ratingInput = this.querySelector('#rating');
                 const maxRating = ratingInput.max;
                 
                 for (let i = 0; i < maxRating; i++) {
@@ -125,17 +125,14 @@
                     this.message.textContent = 'Thanks for your feedback of ' + rating + ' stars. We will try harder next time!';
                 }
 
-                // change the value of the hidden field with name sentBy
                 const sentBy = this.querySelector('input[name="sentBy"]');
                 sentBy.value = 'JS';
 
-                // Prepare your form data
                 const formData = new FormData();
                 formData.append('question', 'How satisfied are you?');
                 formData.append('rating', rating);
                 formData.append('sentBy', 'JS');
 
-                // Send the request with a custom header
                 fetch('https://httpbin.org/post', {
                     method: 'POST',
                     headers: {
